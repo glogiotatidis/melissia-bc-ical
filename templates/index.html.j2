@@ -465,6 +465,15 @@
         /* Ensure dropdown can overlay following list items */
         .calendar-item.open { z-index: 3000; }
         .dropdown-content { z-index: 100000; }
+        /* Ensure full calendar fits inside modal with equal column widths */
+        *, *::before, *::after { box-sizing: border-box; }
+        .calendar-modal .modal-content { width: 95vw; max-width: 1200px; }
+        .calendar-view { overflow-x: hidden; }
+        .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); width:100%; margin:0 auto; }
+        .calendar-grid > .calendar-day-header, .calendar-grid > .calendar-day { min-width:0; }
+        @media (max-width: 900px) { .calendar-modal .modal-content { width:98vw; } }
+        /* Slightly reduce padding for better fit */
+        .calendar-day { padding:4px; }
     </style>
 </head>
 <body>
@@ -694,7 +703,8 @@
                 });
                 const timeStr = event.startDate.toLocaleTimeString('el-GR', {
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
+                    hour12: false
                 });
                 
                 // Clean up description - replace escaped newlines with HTML breaks
@@ -770,7 +780,8 @@
                             const event = dayEvents[i];
                             const timeStr = event.startDate.toLocaleTimeString('el-GR', {
                                 hour: '2-digit',
-                                minute: '2-digit'
+                                minute: '2-digit',
+                                hour12: false
                             });
                             html += `<div class="day-event" data-event-index="${currentEvents.indexOf(event)}" onclick="showEventPopup(${currentEvents.indexOf(event)})" title="${event.summary}">${timeStr} ${event.summary}</div>`;
                         }
@@ -817,7 +828,8 @@
             
             const timeStr = eventObj.startDate.toLocaleTimeString('el-GR', {
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                hour12: false
             });
             
             const cleanDescription = eventObj.description
