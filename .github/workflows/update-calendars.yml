@@ -1,6 +1,9 @@
 name: Update Basketball Calendars
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     # Run daily at 06:00 UTC (08:00 Athens time)
     - cron: '0 6 * * *'
