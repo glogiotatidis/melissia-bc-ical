@@ -1,0 +1,72 @@
+name: Update Basketball Calendars
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC (08:00 Athens time)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update-calendars:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: docker-compose build
+
+    - name: Generate calendars
+      run: docker-compose up
+
+    # - name: Check if calendars were updated
+    #   id: check_changes
+    #   run: |
+    #     if [ -n "$(git status --porcelain output/)" ]; then
+    #       echo "changed=true" >> $GITHUB_OUTPUT
+    #     else
+    #       echo "changed=false" >> $GITHUB_OUTPUT
+    #     fi
+
+    # - name: Commit and push if changed
+    #   if: steps.check_changes.outputs.changed == 'true'
+    #   run: |
+    #     git config --local user.email "action@github.com"
+    #     git config --local user.name "GitHub Action"
+    #     git add output/
+    #     git commit -m "Update basketball calendars - $(date +'%Y-%m-%d %H:%M:%S')"
+    #     git push
+
+  deploy-pages:
+    needs: update-calendars
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: main # Make sure we have the latest changes
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './output'
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
