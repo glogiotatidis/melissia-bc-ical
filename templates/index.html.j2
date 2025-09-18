@@ -658,9 +658,20 @@
                             };
                         }).sort((a, b) => a.startDate - b.startDate);
                         
-                        // Set current month to the first event's month
+                        // Set current month intelligently: prefer today's month if within range
                         if (currentEvents.length > 0) {
-                            currentMonth = new Date(currentEvents[0].startDate.getFullYear(), currentEvents[0].startDate.getMonth(), 1);
+                            const firstEventMonth = new Date(currentEvents[0].startDate.getFullYear(), currentEvents[0].startDate.getMonth(), 1);
+                            const lastEventMonthObj = currentEvents[currentEvents.length - 1].startDate;
+                            const lastEventMonth = new Date(lastEventMonthObj.getFullYear(), lastEventMonthObj.getMonth(), 1);
+                            const today = new Date();
+                            const todayMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                            if (todayMonth < firstEventMonth) {
+                                currentMonth = firstEventMonth; // season not started yet
+                            } else if (todayMonth > lastEventMonth) {
+                                currentMonth = lastEventMonth; // season finished
+                            } else {
+                                currentMonth = todayMonth; // within season
+                            }
                         }
                         
                         // Generate calendar view by default
@@ -770,7 +781,9 @@
                     if (!isCurrentMonth) dayClass += ' other-month';
                     if (isToday) dayClass += ' today';
                     
-                    html += `<div class="${dayClass}" data-date="${currentDate.toISOString().split('T')[0]}">`;
+                    // Use local date (YYYY-MM-DD) without timezone shift
+                    const dataDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(currentDate.getDate()).padStart(2,'0')}`;
+                    html += `<div class="${dayClass}" data-date="${dataDate}">`;
                     html += `<div class="day-number">${currentDate.getDate()}</div>`;
                     
                     if (dayEvents.length > 0) {
@@ -809,17 +822,20 @@
             renderCalendarView();
         }
         
+        // Helper: compare dates in local time (ignoring time portion)
+        function isSameLocalDate(a, b) {
+            return a.getFullYear() === b.getFullYear() &&
+                   a.getMonth() === b.getMonth() &&
+                   a.getDate() === b.getDate();
+        }
+        
         function getEventsForDate(date) {
-            const dateStr = date.toISOString().split('T')[0];
-            return currentEvents.filter(event => {
-                const eventDateStr = event.startDate.toISOString().split('T')[0];
-                return eventDateStr === dateStr;
-            });
+            return currentEvents.filter(event => isSameLocalDate(event.startDate, date));
         }
         
         function isDateToday(date) {
             const today = new Date();
-            return date.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+            return isSameLocalDate(date, today);
         }
         
         function showEventPopup(eventIndex) {
