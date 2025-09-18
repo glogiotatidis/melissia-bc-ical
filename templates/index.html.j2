@@ -111,6 +111,8 @@
             gap: 5px;
             white-space: nowrap;
         }
+        .btn-ico { display:inline-flex; width:16px; height:16px; align-items:center; justify-content:center; }
+        .btn-ico svg { width:16px; height:16px; fill: currentColor; display:block; }
         .view-btn {
             background-color: #28a745;
         }
@@ -185,8 +187,10 @@
         .cal-icon.google { background: #4285F4; }
         .cal-icon.outlook { background: #0A61D7; }
         .cal-icon.yahoo { background: #6001D2; }
-        .cal-icon.apple { background: #555; font-weight:500; }
-        .dropdown-content a:hover .cal-icon.apple { background:#000; }
+        .cal-icon.apple { background: linear-gradient(135deg,#5e5e5e,#303030); font-weight:400; position:relative; font-size:0; }
+        .cal-icon.apple::before { content:""; position:absolute; left:50%; top:54%; width:10px; height:12px; background:#fff; transform:translate(-50%,-50%); border-radius:52% 52% 48% 48% / 60% 60% 45% 45%; }
+        .cal-icon.apple::after { content:""; position:absolute; left:56%; top:14%; width:5px; height:5px; background:#6cc06c; border-radius:60% 60% 0 60%; transform:rotate(-35deg); }
+        .dropdown-content a:hover .cal-icon.apple { background:linear-gradient(135deg,#444,#111); }
         .calendar-modal {
             display: none;
             position: fixed;
@@ -480,10 +484,36 @@
                     <p>{{ cal.games }} {{ 'αγώνας' if cal.games == 1 else 'αγώνες' }}</p>
                 </div>
                 <div class="actions">
-                    <button class="view-btn" onclick="viewCalendar('{{ cal.filename }}', '{{ cal.name }}')">📅 Προβολή</button>
-                    <a href="{{ cal.filename }}" class="download-btn" download>⬇️ Λήψη iCal</a>
+                    <button class="view-btn" onclick="viewCalendar('{{ cal.filename }}', '{{ cal.name }}')">
+                        <span class="btn-ico" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="3" y="5" width="18" height="16" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+                                <line x1="8" y1="3" x2="8" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <line x1="16" y1="3" x2="16" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span>Προβολή</span>
+                    </button>
+                    <a href="{{ cal.filename }}" class="download-btn" download>
+                        <span class="btn-ico" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M6 11l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="4" y="19" width="16" height="2" rx="1" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span>Λήψη iCal</span>
+                    </a>
                     <div class="quick-add-dropdown">
-                        <button class="quick-add-btn" onclick="toggleDropdown(this)">➕ Προσθήκη σε...</button>
+                        <button class="quick-add-btn" onclick="toggleDropdown(this)">
+                            <span class="btn-ico" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <span>Προσθήκη σε...</span>
+                        </button>
                         <div class="dropdown-content">
                             <a href="#" onclick="addToGoogleCalendar('{{ cal.filename }}', '{{ cal.name }}'); closeDropdown(); return false;">
                                 <span class="cal-icon google">G</span>
@@ -498,7 +528,7 @@
                                 Yahoo Calendar
                             </a>
                             <a href="{{ cal.filename }}" download onclick="showAppleInstructions(); closeDropdown();">
-                                <span class="cal-icon apple"></span>
+                                <span class="cal-icon apple" aria-hidden="true"></span>
                                 Apple Calendar
                             </a>
                         </div>
