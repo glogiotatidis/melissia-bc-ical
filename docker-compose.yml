@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  calendar-generator:
+    build: .
+    volumes:
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
