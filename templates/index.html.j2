@@ -161,6 +161,167 @@
             color: #666;
             font-size: 14px;
         }
+        
+        /* Monthly Calendar Styles */
+        .calendar-container {
+            margin: 20px 0;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .month-nav-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .month-nav-btn:hover {
+            background-color: #0056b3;
+        }
+        .month-nav-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .month-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .calendar-day-header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .calendar-day {
+            background-color: white;
+            min-height: 80px;
+            padding: 5px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .calendar-day:hover {
+            background-color: #f8f9fa;
+        }
+        .calendar-day.other-month {
+            background-color: #f5f5f5;
+            color: #999;
+        }
+        .calendar-day.today {
+            background-color: #e7f3ff;
+            border: 2px solid #007bff;
+        }
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .day-events {
+            font-size: 10px;
+            line-height: 1.2;
+        }
+        .day-event {
+            background-color: #007bff;
+            color: white;
+            padding: 1px 3px;
+            margin: 1px 0;
+            border-radius: 2px;
+            font-size: 9px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        .day-event:hover {
+            background-color: #0056b3;
+        }
+        .day-event-count {
+            color: #666;
+            font-size: 9px;
+            margin-top: 2px;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .toggle-btn {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .toggle-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .toggle-btn:hover {
+            background-color: #e9ecef;
+        }
+        .toggle-btn.active:hover {
+            background-color: #0056b3;
+        }
+        .list-view {
+            display: block;
+        }
+        .calendar-view {
+            display: none;
+        }
+        .calendar-view.active {
+            display: block;
+        }
+        .list-view.active {
+            display: block;
+        }
+        .event-popup {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            max-width: 250px;
+            font-size: 12px;
+            display: none;
+        }
+        .event-popup .popup-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .event-popup .popup-time {
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        .event-popup .popup-details {
+            color: #666;
+        }
         .loading {
             text-align: center;
             padding: 20px;
@@ -263,13 +424,35 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2 id="modalTitle">Ημερολόγιο</h2>
+            <div class="view-toggle">
+                <button class="toggle-btn" onclick="switchView('list')">Λίστα</button>
+                <button class="toggle-btn active" onclick="switchView('calendar')">Ημερολόγιο</button>
+            </div>
             <div id="modalContent">
                 <div class="loading">Φόρτωση...</div>
             </div>
         </div>
     </div>
+    
+    <!-- Event Popup -->
+    <div id="eventPopup" class="event-popup">
+        <div class="popup-title"></div>
+        <div class="popup-time"></div>
+        <div class="popup-details"></div>
+    </div>
 
     <script>
+        let currentEvents = [];
+        let currentView = 'calendar';
+        let currentMonth = new Date();
+        
+        const monthNames = [
+            'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+            'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+        ];
+        
+        const dayNames = ['Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ', 'Σάβ', 'Κυρ'];
+        
         function viewCalendar(filename, calendarName) {
             const modal = document.getElementById('calendarModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -278,6 +461,11 @@
             modalTitle.textContent = calendarName;
             modalContent.innerHTML = '<div class="loading">Φόρτωση...</div>';
             modal.style.display = 'block';
+            
+            // Reset view toggle
+            currentView = 'calendar';
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.toggle-btn[onclick="switchView(\'calendar\')"]').classList.add('active');
             
             // Fetch and parse the iCal file
             fetch(filename)
@@ -299,7 +487,7 @@
                         }
                         
                         // Sort events by date
-                        const events = vevents.map(vevent => {
+                        currentEvents = vevents.map(vevent => {
                             const event = new ICAL.Event(vevent);
                             return {
                                 summary: event.summary,
@@ -310,38 +498,14 @@
                             };
                         }).sort((a, b) => a.startDate - b.startDate);
                         
-                        // Generate HTML for events
-                        let html = '';
-                        events.forEach(event => {
-                            const dateStr = event.startDate.toLocaleDateString('el-GR', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
-                            const timeStr = event.startDate.toLocaleTimeString('el-GR', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
-                            
-                            // Clean up description - replace escaped newlines with HTML breaks
-                            const cleanDescription = event.description
-                                .replace(/\\n/g, '<br>')
-                                .replace(/\n/g, '<br>');
-                            
-                            html += `
-                                <div class="event">
-                                    <div class="event-title">${event.summary}</div>
-                                    <div class="event-date">${dateStr} στις ${timeStr}</div>
-                                    <div class="event-details">
-                                        ${event.location ? `<span class="emoji">📍</span> ${event.location}<br>` : ''}
-                                        ${cleanDescription ? cleanDescription : ''}
-                                    </div>
-                                </div>
-                            `;
-                        });
+                        // Set current month to the first event's month
+                        if (currentEvents.length > 0) {
+                            currentMonth = new Date(currentEvents[0].startDate.getFullYear(), currentEvents[0].startDate.getMonth(), 1);
+                        }
                         
-                        modalContent.innerHTML = html;
+                        // Generate calendar view by default
+                        renderCalendarView();
+                        
                     } catch (parseError) {
                         console.error('Error parsing iCal data:', parseError);
                         modalContent.innerHTML = '<p>Σφάλμα κατά την ανάλυση του ημερολογίου.</p>';
@@ -353,15 +517,196 @@
                 });
         }
         
+        function switchView(view) {
+            currentView = view;
+            
+            // Update toggle buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.toggle-btn[onclick="switchView('${view}')"]`).classList.add('active');
+            
+            if (view === 'list') {
+                renderListView();
+            } else {
+                renderCalendarView();
+            }
+        }
+        
+        function renderListView() {
+            let html = '<div class="list-view active">';
+            
+            currentEvents.forEach(event => {
+                const dateStr = event.startDate.toLocaleDateString('el-GR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const timeStr = event.startDate.toLocaleTimeString('el-GR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Clean up description - replace escaped newlines with HTML breaks
+                const cleanDescription = event.description
+                    .replace(/\\n/g, '<br>')
+                    .replace(/\n/g, '<br>');
+                
+                html += `
+                    <div class="event">
+                        <div class="event-title">${event.summary}</div>
+                        <div class="event-date">${dateStr} στις ${timeStr}</div>
+                        <div class="event-details">
+                            ${event.location ? `<span class="emoji">📍</span> ${event.location}<br>` : ''}
+                            ${cleanDescription ? cleanDescription : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            document.getElementById('modalContent').innerHTML = html;
+        }
+        
+        function renderCalendarView() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            
+            let html = `
+                <div class="calendar-view active">
+                    <div class="calendar-header">
+                        <button class="month-nav-btn" onclick="navigateMonth(-1)">‹</button>
+                        <div class="month-title">${monthNames[month]} ${year}</div>
+                        <button class="month-nav-btn" onclick="navigateMonth(1)">›</button>
+                    </div>
+                    <div class="calendar-grid">
+            `;
+            
+            // Add day headers
+            dayNames.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // Get first day of month and last day of month
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            
+            // Adjust to start from Monday (0 = Sunday, 1 = Monday, etc.)
+            const dayOfWeek = (firstDay.getDay() + 6) % 7; // Convert Sunday = 0 to Sunday = 6
+            startDate.setDate(startDate.getDate() - dayOfWeek);
+            
+            // Generate calendar days (6 weeks)
+            for (let week = 0; week < 6; week++) {
+                for (let day = 0; day < 7; day++) {
+                    const currentDate = new Date(startDate);
+                    currentDate.setDate(startDate.getDate() + (week * 7) + day);
+                    
+                    const isCurrentMonth = currentDate.getMonth() === month;
+                    const isToday = isDateToday(currentDate);
+                    const dayEvents = getEventsForDate(currentDate);
+                    
+                    let dayClass = 'calendar-day';
+                    if (!isCurrentMonth) dayClass += ' other-month';
+                    if (isToday) dayClass += ' today';
+                    
+                    html += `<div class="${dayClass}" data-date="${currentDate.toISOString().split('T')[0]}">`;
+                    html += `<div class="day-number">${currentDate.getDate()}</div>`;
+                    
+                    if (dayEvents.length > 0) {
+                        html += '<div class="day-events">';
+                        const maxVisible = 3;
+                        for (let i = 0; i < Math.min(dayEvents.length, maxVisible); i++) {
+                            const event = dayEvents[i];
+                            const timeStr = event.startDate.toLocaleTimeString('el-GR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            html += `<div class="day-event" data-event-index="${currentEvents.indexOf(event)}" onclick="showEventPopup(${currentEvents.indexOf(event)})" title="${event.summary}">${timeStr} ${event.summary}</div>`;
+                        }
+                        
+                        if (dayEvents.length > maxVisible) {
+                            html += `<div class="day-event-count">+${dayEvents.length - maxVisible} ακόμη</div>`;
+                        }
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                }
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modalContent').innerHTML = html;
+        }
+        
+        function navigateMonth(direction) {
+            currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + direction, 1);
+            renderCalendarView();
+        }
+        
+        function getEventsForDate(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            return currentEvents.filter(event => {
+                const eventDateStr = event.startDate.toISOString().split('T')[0];
+                return eventDateStr === dateStr;
+            });
+        }
+        
+        function isDateToday(date) {
+            const today = new Date();
+            return date.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+        }
+        
+        function showEventPopup(eventIndex) {
+            const popup = document.getElementById('eventPopup');
+            const eventObj = currentEvents[eventIndex];
+            
+            const timeStr = eventObj.startDate.toLocaleTimeString('el-GR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const cleanDescription = eventObj.description
+                .replace(/\\n/g, '<br>')
+                .replace(/\n/g, '<br>');
+            
+            popup.querySelector('.popup-title').textContent = eventObj.summary;
+            popup.querySelector('.popup-time').textContent = timeStr;
+            popup.querySelector('.popup-details').innerHTML = 
+                (eventObj.location ? `📍 ${eventObj.location}<br>` : '') +
+                (cleanDescription ? cleanDescription : '');
+            
+            // Position popup near mouse
+            popup.style.display = 'block';
+            popup.style.left = '50%';
+            popup.style.top = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+            
+            // Hide popup after 3 seconds or on click elsewhere
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 3000);
+        }
+        
         function closeModal() {
             document.getElementById('calendarModal').style.display = 'none';
+            document.getElementById('eventPopup').style.display = 'none';
         }
         
         // Close modal when clicking outside of it
         window.onclick = function(event) {
             const modal = document.getElementById('calendarModal');
+            const popup = document.getElementById('eventPopup');
+            
             if (event.target === modal) {
                 modal.style.display = 'none';
+            }
+            
+            if (popup.style.display === 'block' && !popup.contains(event.target)) {
+                popup.style.display = 'none';
             }
         }
         
