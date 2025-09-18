@@ -227,7 +227,7 @@ def create_index_page(calendars_created):
         calendars=calendars_created,
         total_games=total_games,
         tmimata_count=tmimata_count,
-        last_updated=datetime.now().strftime('%d/%m/%Y %H:%M')
+        last_updated=datetime.now(ATHENS_TZ).strftime('%d/%m/%Y %H:%M EEST')
     )
 
     # Write to file
