@@ -19,6 +19,7 @@
             border-radius: 10px;
             padding: 30px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: visible;
         }
         h1 {
             color: #333;
@@ -45,6 +46,8 @@
             justify-content: space-between;
             align-items: center;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: visible;
         }
         .calendar-item:hover {
             background-color: #e9ecef;
@@ -73,6 +76,7 @@
             gap: 10px;
             align-items: center;
             flex-wrap: wrap;
+            position: relative;
         }
         @media (max-width: 600px) {
             .calendar-item {
@@ -83,9 +87,15 @@
             .actions {
                 width: 100%;
                 justify-content: center;
+                flex-wrap: wrap;
+            }
+            .quick-add-dropdown .dropdown-content {
+                right: auto;
+                left: 0;
+                min-width: 200px;
             }
         }
-        .download-btn, .view-btn {
+        .download-btn, .view-btn, .quick-add-btn {
             background-color: #007bff;
             color: white;
             text-decoration: none;
@@ -96,9 +106,18 @@
             border: none;
             cursor: pointer;
             font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
         }
         .view-btn {
             background-color: #28a745;
+        }
+        .quick-add-btn {
+            background-color: #6c757d;
+            padding: 10px 20px;
+            font-size: 14px;
         }
         .download-btn:hover {
             background-color: #0056b3;
@@ -106,10 +125,51 @@
         .view-btn:hover {
             background-color: #1e7e34;
         }
+        .quick-add-btn:hover {
+            background-color: #545b62;
+        }
+        .quick-add-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            z-index: 100000;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            border: 1px solid #ccc;
+        }
+        .dropdown-content.show {
+            display: block;
+        }
+        .dropdown-content a {
+            color: #333;
+            padding: 10px 12px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
+        }
+        .dropdown-content a:last-child {
+            border-bottom: none;
+            border-radius: 0 0 4px 4px;
+        }
+        .dropdown-content a:first-child {
+            border-radius: 4px 4px 0 0;
+        }
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
         .calendar-modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 5000;
             left: 0;
             top: 0;
             width: 100%;
@@ -305,7 +365,7 @@
             border-radius: 5px;
             padding: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1001;
+            z-index: 6000;
             max-width: 250px;
             font-size: 12px;
             display: none;
@@ -377,6 +437,9 @@
             font-feature-settings: "liga" 1, "kern" 1;
             text-rendering: optimizeLegibility;
         }
+        /* Ensure dropdown can overlay following list items */
+        .calendar-item.open { z-index: 3000; }
+        .dropdown-content { z-index: 100000; }
     </style>
 </head>
 <body>
@@ -396,8 +459,25 @@
                     <p>{{ cal.games }} {{ 'αγώνας' if cal.games == 1 else 'αγώνες' }}</p>
                 </div>
                 <div class="actions">
-                    <button class="view-btn" onclick="viewCalendar('{{ cal.filename }}', '{{ cal.name }}')">Προβολή</button>
-                    <a href="{{ cal.filename }}" class="download-btn" download>Λήψη iCal</a>
+                    <button class="view-btn" onclick="viewCalendar('{{ cal.filename }}', '{{ cal.name }}')">📅 Προβολή</button>
+                    <a href="{{ cal.filename }}" class="download-btn" download>⬇️ Λήψη iCal</a>
+                    <div class="quick-add-dropdown">
+                        <button class="quick-add-btn" onclick="toggleDropdown(this)">➕ Προσθήκη σε...</button>
+                        <div class="dropdown-content">
+                            <a href="#" onclick="addToGoogleCalendar('{{ cal.filename }}', '{{ cal.name }}'); closeDropdown(); return false;">
+                                📧 Google Calendar
+                            </a>
+                            <a href="#" onclick="addToOutlook('{{ cal.filename }}', '{{ cal.name }}'); closeDropdown(); return false;">
+                                🏢 Outlook.com
+                            </a>
+                            <a href="#" onclick="addToYahoo('{{ cal.filename }}', '{{ cal.name }}'); closeDropdown(); return false;">
+                                🟣 Yahoo Calendar
+                            </a>
+                            <a href="{{ cal.filename }}" download onclick="showAppleInstructions(); closeDropdown();">
+                                🍎 Apple Calendar
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </li>
         {% endfor %}
@@ -409,11 +489,27 @@
 
         <div class="instructions">
             <h2>Οδηγίες Χρήσης</h2>
+            <h3>🚀 Γρήγορη Προσθήκη</h3>
+            <p>Χρησιμοποιήστε το κουμπί <strong>"➕ Προσθήκη σε..."</strong> για άμεση εισαγωγή στο ημερολόγιό σας:</p>
+            <ul>
+                <li><strong>📧 Google Calendar:</strong> Άνοιγμα σε νέα καρτέλα για συνδρομή</li>
+                <li><strong>🏢 Outlook.com:</strong> Άμεση εισαγωγή στο Outlook online</li>
+                <li><strong>🟣 Yahoo Calendar:</strong> Οδηγίες για χειροκίνητη εισαγωγή</li>
+                <li><strong>🍎 Apple Calendar:</strong> Κατέβασμα με οδηγίες για iPhone/iPad/Mac</li>
+            </ul>
+            
+            <h3>📱 Εναλλακτικές Μέθοδοι</h3>
             <ol>
-                <li><strong>Για iPhone/iPad:</strong> Πατήστε "Λήψη iCal" και επιλέξτε "Προσθήκη σε Ημερολόγιο"</li>
-                <li><strong>Για Android:</strong> Κατεβάστε το αρχείο και ανοίξτε το με το Google Calendar</li>
-                <li><strong>Για υπολογιστή:</strong> Κάντε διπλό κλικ στο αρχείο ή εισάγετε το στο Outlook/Google Calendar</li>
+                <li><strong>Κλασική Λήψη:</strong> Πατήστε "⬇️ Λήψη iCal" και ανοίξτε το αρχείο</li>
+                <li><strong>Προβολή Online:</strong> Πατήστε "📅 Προβολή" για να δείτε τους αγώνες στον browser</li>
             </ol>
+            
+            <h3>💡 Συμβουλές</h3>
+            <ul>
+                <li>Τα ημερολόγια ενημερώνονται αυτόματα όταν προστίθενται νέοι αγώνες</li>
+                <li>Κάθε τμήμα έχει το δικό του ημερολόγιο για καλύτερη οργάνωση</li>
+                <li>Το ημερολόγιο "📅 Όλα τα Τμήματα" περιλαμβάνει όλους τους αγώνες</li>
+            </ul>
         </div>
 
         <p class="last-updated">Τελευταία ενημέρωση: {{ last_updated }}</p>
@@ -714,6 +810,82 @@
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeModal();
+            }
+        });
+        
+        // Calendar integration functions
+        function addToGoogleCalendar(filename, calendarName) {
+            // Get the full URL to the iCal file
+            const icalUrl = encodeURIComponent(window.location.origin + window.location.pathname.replace('index.html', '') + filename);
+            const calName = encodeURIComponent(calendarName);
+            
+            // Google Calendar subscription URL
+            const googleUrl = `https://calendar.google.com/calendar/render?cid=${icalUrl}`;
+            
+            window.open(googleUrl, '_blank');
+        }
+        
+        function addToOutlook(filename, calendarName) {
+            // Get the full URL to the iCal file
+            const icalUrl = encodeURIComponent(window.location.origin + window.location.pathname.replace('index.html', '') + filename);
+            const calName = encodeURIComponent(calendarName);
+            
+            // Outlook.com import URL
+            const outlookUrl = `https://outlook.live.com/calendar/0/addfromweb/?url=${icalUrl}&name=${calName}`;
+            
+            window.open(outlookUrl, '_blank');
+        }
+        
+        function addToYahoo(filename, calendarName) {
+            // For Yahoo, we'll provide instructions since they don't have a direct URL import
+            alert(`Για το Yahoo Calendar:\n\n1. Πηγαίνετε στο Yahoo Calendar\n2. Κάντε κλικ στο "Import" ή "Εισαγωγή"\n3. Επιλέξτε "From URL" ή "Από URL"\n4. Εισάγετε: ${window.location.origin + window.location.pathname.replace('index.html', '') + filename}\n\nΗ εναλλακτική είναι να κατεβάσετε το αρχείο .ics και να το ανεβάσετε χειροκίνητα.`);
+        }
+        
+        function showAppleInstructions() {
+            setTimeout(() => {
+                alert(`Για το Apple Calendar:\n\n📱 iPhone/iPad:\n• Το αρχείο θα ανοίξει αυτόματα στο Calendar app\n• Επιλέξτε "Προσθήκη" για να το εισάγετε\n\n💻 Mac:\n• Κάντε διπλό κλικ στο αρχείο .ics\n• Το Calendar app θα ανοίξει και θα ρωτήσει για εισαγωγή\n• Επιλέξτε το ημερολόγιο που θέλετε να προσθέσετε τους αγώνες`);
+            }, 100);
+        }
+        
+        // Get current page URL without filename for calendar URLs
+        function getCurrentBaseUrl() {
+            const url = window.location.href;
+            return url.substring(0, url.lastIndexOf('/') + 1);
+        }
+        
+        // Dropdown functionality for mobile/desktop with stacking fix
+        function toggleDropdown(button) {
+            const dropdown = button.nextElementSibling;
+            const item = button.closest('.calendar-item');
+            const isVisible = dropdown.classList.contains('show');
+
+            // Close all others
+            document.querySelectorAll('.calendar-item.open').forEach(it => {
+                if (it !== item) {
+                    it.classList.remove('open');
+                    const dc = it.querySelector('.dropdown-content.show');
+                    if (dc) dc.classList.remove('show');
+                }
+            });
+
+            if (isVisible) {
+                dropdown.classList.remove('show');
+                item.classList.remove('open');
+            } else {
+                dropdown.classList.add('show');
+                item.classList.add('open');
+            }
+        }
+
+        function closeDropdown() {
+            document.querySelectorAll('.calendar-item.open').forEach(it => it.classList.remove('open'));
+            document.querySelectorAll('.dropdown-content.show').forEach(d => d.classList.remove('show'));
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.quick-add-dropdown')) {
+                closeDropdown();
             }
         });
     </script>

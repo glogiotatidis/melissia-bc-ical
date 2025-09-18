@@ -222,11 +222,16 @@ def create_index_page(calendars_created):
     # Count τμήματα (excluding combined calendar)
     tmimata_count = sum(1 for cal in calendars_created if '📅' not in cal['name'])
 
+    # Add base URL information for calendar integrations
+    # This will be used by JavaScript to create full URLs for calendar subscriptions
+    base_url = "https://melissiabc.gr"  # You can modify this to match your actual domain
+    
     # Render template
     html = template.render(
         calendars=calendars_created,
         total_games=total_games,
         tmimata_count=tmimata_count,
+        base_url=base_url,
         last_updated=datetime.now(ATHENS_TZ).strftime('%d/%m/%Y %H:%M EEST')
     )
 
