@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Melissia BC - Ημερολόγια Αγώνων 2025-26</title>
+    <script src="https://unpkg.com/ical.js@1.5.0/build/ical.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -65,7 +66,24 @@
             color: #666;
             font-size: 14px;
         }
-        .download-btn {
+        .actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 600px) {
+            .calendar-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        .download-btn, .view-btn {
             background-color: #007bff;
             color: white;
             text-decoration: none;
@@ -73,9 +91,88 @@
             border-radius: 5px;
             font-weight: 500;
             transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .view-btn {
+            background-color: #28a745;
         }
         .download-btn:hover {
             background-color: #0056b3;
+        }
+        .view-btn:hover {
+            background-color: #1e7e34;
+        }
+        .calendar-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #000;
+        }
+        .event {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .event-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .event-date {
+            color: #007bff;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        .event-details {
+            color: #666;
+            font-size: 14px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 5% auto;
+                width: 95%;
+                padding: 15px;
+            }
+            .event {
+                padding: 12px;
+            }
         }
         .instructions {
             background-color: #e7f3ff;
@@ -125,7 +222,10 @@
                     <h3>{{ cal.name }}</h3>
                     <p>{{ cal.games }} {{ 'αγώνας' if cal.games == 1 else 'αγώνες' }}</p>
                 </div>
-                <a href="{{ cal.filename }}" class="download-btn" download>Λήψη iCal</a>
+                <div class="actions">
+                    <button class="view-btn" onclick="viewCalendar('{{ cal.filename }}', '{{ cal.name }}')">Προβολή</button>
+                    <a href="{{ cal.filename }}" class="download-btn" download>Λήψη iCal</a>
+                </div>
             </li>
         {% endfor %}
         </ul>
@@ -145,5 +245,120 @@
 
         <p class="last-updated">Τελευταία ενημέρωση: {{ last_updated }}</p>
     </div>
+
+    <!-- Calendar Modal -->
+    <div id="calendarModal" class="calendar-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Ημερολόγιο</h2>
+            <div id="modalContent">
+                <div class="loading">Φόρτωση...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function viewCalendar(filename, calendarName) {
+            const modal = document.getElementById('calendarModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalTitle.textContent = calendarName;
+            modalContent.innerHTML = '<div class="loading">Φόρτωση...</div>';
+            modal.style.display = 'block';
+            
+            // Fetch and parse the iCal file
+            fetch(filename)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(icalData => {
+                    try {
+                        const jcalData = ICAL.parse(icalData);
+                        const comp = new ICAL.Component(jcalData);
+                        const vevents = comp.getAllSubcomponents('vevent');
+                        
+                        if (vevents.length === 0) {
+                            modalContent.innerHTML = '<p>Δεν βρέθηκαν αγώνες.</p>';
+                            return;
+                        }
+                        
+                        // Sort events by date
+                        const events = vevents.map(vevent => {
+                            const event = new ICAL.Event(vevent);
+                            return {
+                                summary: event.summary,
+                                startDate: event.startDate.toJSDate(),
+                                endDate: event.endDate.toJSDate(),
+                                description: event.description || '',
+                                location: event.location || ''
+                            };
+                        }).sort((a, b) => a.startDate - b.startDate);
+                        
+                        // Generate HTML for events
+                        let html = '';
+                        events.forEach(event => {
+                            const dateStr = event.startDate.toLocaleDateString('el-GR', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                            const timeStr = event.startDate.toLocaleTimeString('el-GR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            
+                            // Clean up description - replace escaped newlines with HTML breaks
+                            const cleanDescription = event.description
+                                .replace(/\\n/g, '<br>')
+                                .replace(/\n/g, '<br>');
+                            
+                            html += `
+                                <div class="event">
+                                    <div class="event-title">${event.summary}</div>
+                                    <div class="event-date">${dateStr} στις ${timeStr}</div>
+                                    <div class="event-details">
+                                        ${event.location ? `📍 ${event.location}<br>` : ''}
+                                        ${cleanDescription ? cleanDescription : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        modalContent.innerHTML = html;
+                    } catch (parseError) {
+                        console.error('Error parsing iCal data:', parseError);
+                        modalContent.innerHTML = '<p>Σφάλμα κατά την ανάλυση του ημερολογίου.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading calendar:', error);
+                    modalContent.innerHTML = '<p>Σφάλμα κατά τη φόρτωση του ημερολογίου.</p>';
+                });
+        }
+        
+        function closeModal() {
+            document.getElementById('calendarModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('calendarModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>

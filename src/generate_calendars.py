@@ -272,8 +272,8 @@ def main():
         # Create calendar
         cal = create_calendar(tmima_games, tmima_name)
 
-        # Save to file
-        filename = f"melissia-bc-{sanitize_filename(tmima_name)}-2025-26.ics"
+        # Save to file (stable filename without period)
+        filename = f"melissia-bc-{sanitize_filename(tmima_name)}.ics"
         filepath = os.path.join(output_dir, filename)
 
         with open(filepath, 'wb') as f:
@@ -297,8 +297,8 @@ def main():
         # Create combined calendar
         cal = create_calendar(all_games_sorted, "Όλα τα Τμήματα")
 
-        # Save to file
-        filename = "melissia-bc-all-2025-26.ics"
+        # Save to file (stable filename without period)
+        filename = "melissia-bc-all.ics"
         filepath = os.path.join(output_dir, filename)
 
         with open(filepath, 'wb') as f:
