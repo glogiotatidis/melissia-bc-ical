@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Melissia BC - Ημερολόγια Αγώνων 2025-26</title>
     <script src="https://unpkg.com/ical.js@1.5.0/build/ical.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Twemoji Mozilla", sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
@@ -23,6 +24,7 @@
             color: #333;
             text-align: center;
             margin-bottom: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Twemoji Mozilla", sans-serif;
         }
         .subtitle {
             text-align: center;
@@ -204,11 +206,21 @@
             margin-bottom: 20px;
             font-style: italic;
         }
+        /* Emoji support fallback */
+        .emoji {
+            font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Twemoji Mozilla", sans-serif;
+            font-size: 1.2em;
+        }
+        /* Ensure emojis are displayed properly across browsers */
+        h1, .event-details {
+            font-feature-settings: "liga" 1, "kern" 1;
+            text-rendering: optimizeLegibility;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏀 Melissia BC</h1>
+        <h1><span class="emoji">🏀</span> Melissia BC</h1>
         <p class="subtitle">Ημερολόγια Αγώνων 2025-26</p>
 
         {% if total_games > 0 %}
@@ -322,7 +334,7 @@
                                     <div class="event-title">${event.summary}</div>
                                     <div class="event-date">${dateStr} στις ${timeStr}</div>
                                     <div class="event-details">
-                                        ${event.location ? `📍 ${event.location}<br>` : ''}
+                                        ${event.location ? `<span class="emoji">📍</span> ${event.location}<br>` : ''}
                                         ${cleanDescription ? cleanDescription : ''}
                                     </div>
                                 </div>
