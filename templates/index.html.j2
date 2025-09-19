@@ -246,7 +246,7 @@
             color: #666;
             font-size: 14px;
         }
-        
+
         /* Monthly Calendar Styles */
         .calendar-container {
             margin: 20px 0;
@@ -561,13 +561,13 @@
                 <li><strong>🟣 Yahoo Calendar:</strong> Οδηγίες για χειροκίνητη εισαγωγή</li>
                 <li><strong>🍎 Apple Calendar:</strong> Κατέβασμα με οδηγίες για iPhone/iPad/Mac</li>
             </ul>
-            
+
             <h3>📱 Εναλλακτικές Μέθοδοι</h3>
             <ol>
                 <li><strong>Κλασική Λήψη:</strong> Πατήστε "⬇️ Λήψη iCal" και ανοίξτε το αρχείο</li>
                 <li><strong>Προβολή Online:</strong> Πατήστε "📅 Προβολή" για να δείτε τους αγώνες στον browser</li>
             </ol>
-            
+
             <h3>💡 Συμβουλές</h3>
             <ul>
                 <li>Τα ημερολόγια ενημερώνονται αυτόματα όταν προστίθενται νέοι αγώνες</li>
@@ -593,7 +593,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Event Popup -->
     <div id="eventPopup" class="event-popup">
         <div class="popup-title"></div>
@@ -605,28 +605,28 @@
         let currentEvents = [];
         let currentView = 'calendar';
         let currentMonth = new Date();
-        
+
         const monthNames = [
             'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
             'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
         ];
-        
+
         const dayNames = ['Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ', 'Σάβ', 'Κυρ'];
-        
+
         function viewCalendar(filename, calendarName) {
             const modal = document.getElementById('calendarModal');
             const modalTitle = document.getElementById('modalTitle');
             const modalContent = document.getElementById('modalContent');
-            
+
             modalTitle.textContent = calendarName;
             modalContent.innerHTML = '<div class="loading">Φόρτωση...</div>';
             modal.style.display = 'block';
-            
+
             // Reset view toggle
             currentView = 'calendar';
             document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('.toggle-btn[onclick="switchView(\'calendar\')"]').classList.add('active');
-            
+
             // Fetch and parse the iCal file
             fetch(filename)
                 .then(response => {
@@ -640,12 +640,12 @@
                         const jcalData = ICAL.parse(icalData);
                         const comp = new ICAL.Component(jcalData);
                         const vevents = comp.getAllSubcomponents('vevent');
-                        
+
                         if (vevents.length === 0) {
                             modalContent.innerHTML = '<p>Δεν βρέθηκαν αγώνες.</p>';
                             return;
                         }
-                        
+
                         // Sort events by date
                         currentEvents = vevents.map(vevent => {
                             const event = new ICAL.Event(vevent);
@@ -657,7 +657,7 @@
                                 location: event.location || ''
                             };
                         }).sort((a, b) => a.startDate - b.startDate);
-                        
+
                         // Set current month intelligently: prefer today's month if within range
                         if (currentEvents.length > 0) {
                             const firstEventMonth = new Date(currentEvents[0].startDate.getFullYear(), currentEvents[0].startDate.getMonth(), 1);
@@ -673,10 +673,10 @@
                                 currentMonth = todayMonth; // within season
                             }
                         }
-                        
+
                         // Generate calendar view by default
                         renderCalendarView();
-                        
+
                     } catch (parseError) {
                         console.error('Error parsing iCal data:', parseError);
                         modalContent.innerHTML = '<p>Σφάλμα κατά την ανάλυση του ημερολογίου.</p>';
@@ -687,24 +687,24 @@
                     modalContent.innerHTML = '<p>Σφάλμα κατά τη φόρτωση του ημερολογίου.</p>';
                 });
         }
-        
+
         function switchView(view) {
             currentView = view;
-            
+
             // Update toggle buttons
             document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.toggle-btn[onclick="switchView('${view}')"]`).classList.add('active');
-            
+
             if (view === 'list') {
                 renderListView();
             } else {
                 renderCalendarView();
             }
         }
-        
+
         function renderListView() {
             let html = '<div class="list-view active">';
-            
+
             currentEvents.forEach(event => {
                 const dateStr = event.startDate.toLocaleDateString('el-GR', {
                     weekday: 'long',
@@ -717,12 +717,12 @@
                     minute: '2-digit',
                     hour12: false
                 });
-                
+
                 // Clean up description - replace escaped newlines with HTML breaks
                 const cleanDescription = event.description
                     .replace(/\\n/g, '<br>')
                     .replace(/\n/g, '<br>');
-                
+
                 html += `
                     <div class="event">
                         <div class="event-title">${event.summary}</div>
@@ -734,15 +734,15 @@
                     </div>
                 `;
             });
-            
+
             html += '</div>';
             document.getElementById('modalContent').innerHTML = html;
         }
-        
+
         function renderCalendarView() {
             const year = currentMonth.getFullYear();
             const month = currentMonth.getMonth();
-            
+
             let html = `
                 <div class="calendar-view active">
                     <div class="calendar-header">
@@ -752,40 +752,40 @@
                     </div>
                     <div class="calendar-grid">
             `;
-            
+
             // Add day headers
             dayNames.forEach(day => {
                 html += `<div class="calendar-day-header">${day}</div>`;
             });
-            
+
             // Get first day of month and last day of month
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const startDate = new Date(firstDay);
-            
+
             // Adjust to start from Monday (0 = Sunday, 1 = Monday, etc.)
             const dayOfWeek = (firstDay.getDay() + 6) % 7; // Convert Sunday = 0 to Sunday = 6
             startDate.setDate(startDate.getDate() - dayOfWeek);
-            
+
             // Generate calendar days (6 weeks)
             for (let week = 0; week < 6; week++) {
                 for (let day = 0; day < 7; day++) {
                     const currentDate = new Date(startDate);
                     currentDate.setDate(startDate.getDate() + (week * 7) + day);
-                    
+
                     const isCurrentMonth = currentDate.getMonth() === month;
                     const isToday = isDateToday(currentDate);
                     const dayEvents = getEventsForDate(currentDate);
-                    
+
                     let dayClass = 'calendar-day';
                     if (!isCurrentMonth) dayClass += ' other-month';
                     if (isToday) dayClass += ' today';
-                    
+
                     // Use local date (YYYY-MM-DD) without timezone shift
                     const dataDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(currentDate.getDate()).padStart(2,'0')}`;
                     html += `<div class="${dayClass}" data-date="${dataDate}">`;
                     html += `<div class="day-number">${currentDate.getDate()}</div>`;
-                    
+
                     if (dayEvents.length > 0) {
                         html += '<div class="day-events">';
                         const maxVisible = 3;
@@ -798,144 +798,164 @@
                             });
                             html += `<div class="day-event" data-event-index="${currentEvents.indexOf(event)}" onclick="showEventPopup(${currentEvents.indexOf(event)})" title="${event.summary}">${timeStr} ${event.summary}</div>`;
                         }
-                        
+
                         if (dayEvents.length > maxVisible) {
                             html += `<div class="day-event-count">+${dayEvents.length - maxVisible} ακόμη</div>`;
                         }
                         html += '</div>';
                     }
-                    
+
                     html += '</div>';
                 }
             }
-            
+
             html += `
                     </div>
                 </div>
             `;
-            
+
             document.getElementById('modalContent').innerHTML = html;
         }
-        
+
         function navigateMonth(direction) {
             currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + direction, 1);
             renderCalendarView();
         }
-        
+
         // Helper: compare dates in local time (ignoring time portion)
         function isSameLocalDate(a, b) {
             return a.getFullYear() === b.getFullYear() &&
                    a.getMonth() === b.getMonth() &&
                    a.getDate() === b.getDate();
         }
-        
+
         function getEventsForDate(date) {
             return currentEvents.filter(event => isSameLocalDate(event.startDate, date));
         }
-        
+
         function isDateToday(date) {
             const today = new Date();
             return isSameLocalDate(date, today);
         }
-        
+
         function showEventPopup(eventIndex) {
             const popup = document.getElementById('eventPopup');
             const eventObj = currentEvents[eventIndex];
-            
+
             const timeStr = eventObj.startDate.toLocaleTimeString('el-GR', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false
             });
-            
+
             const cleanDescription = eventObj.description
                 .replace(/\\n/g, '<br>')
                 .replace(/\n/g, '<br>');
-            
+
             popup.querySelector('.popup-title').textContent = eventObj.summary;
             popup.querySelector('.popup-time').textContent = timeStr;
-            popup.querySelector('.popup-details').innerHTML = 
+            popup.querySelector('.popup-details').innerHTML =
                 (eventObj.location ? `📍 ${eventObj.location}<br>` : '') +
                 (cleanDescription ? cleanDescription : '');
-            
+
             // Position popup near mouse
             popup.style.display = 'block';
             popup.style.left = '50%';
             popup.style.top = '50%';
             popup.style.transform = 'translate(-50%, -50%)';
-            
+
             // Hide popup after 3 seconds or on click elsewhere
             setTimeout(() => {
                 popup.style.display = 'none';
             }, 3000);
         }
-        
+
         function closeModal() {
             document.getElementById('calendarModal').style.display = 'none';
             document.getElementById('eventPopup').style.display = 'none';
         }
-        
+
         // Close modal when clicking outside of it
         window.onclick = function(event) {
             const modal = document.getElementById('calendarModal');
             const popup = document.getElementById('eventPopup');
-            
+
             if (event.target === modal) {
                 modal.style.display = 'none';
             }
-            
+
             if (popup.style.display === 'block' && !popup.contains(event.target)) {
                 popup.style.display = 'none';
             }
         }
-        
+
         // Close modal with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeModal();
             }
         });
-        
+
         // Calendar integration functions
+        function buildAbsoluteIcsUrl(filename) {
+            try {
+                return new URL(filename, document.baseURI).href;
+            } catch (e) {
+                return window.location.origin + window.location.pathname.replace('index.html', '') + filename;
+            }
+        }
+
         function addToGoogleCalendar(filename, calendarName) {
-            // Get the full URL to the iCal file
-            const icalUrl = encodeURIComponent(window.location.origin + window.location.pathname.replace('index.html', '') + filename);
-            const calName = encodeURIComponent(calendarName);
-            
-            // Google Calendar subscription URL
-            const googleUrl = `https://calendar.google.com/calendar/render?cid=${icalUrl}`;
-            
-            window.open(googleUrl, '_blank');
+            const absIcsUrl = buildAbsoluteIcsUrl(filename);
+            if (absIcsUrl.startsWith('file:')) {
+                alert('Ανοίξτε τη σελίδα από ένα δημόσιο URL (όχι file://) ώστε το Google να μπορέσει να διαβάσει το .ics.');
+                return;
+            }
+            const googleUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(absIcsUrl)}`;
+            window.open(googleUrl, '_blank', 'noopener');
         }
-        
+
         function addToOutlook(filename, calendarName) {
-            // Get the full URL to the iCal file
-            const icalUrl = encodeURIComponent(window.location.origin + window.location.pathname.replace('index.html', '') + filename);
-            const calName = encodeURIComponent(calendarName);
-            
-            // Outlook.com import URL
-            const outlookUrl = `https://outlook.live.com/calendar/0/addfromweb/?url=${icalUrl}&name=${calName}`;
-            
-            window.open(outlookUrl, '_blank');
+            const absIcsUrl = buildAbsoluteIcsUrl(filename);
+            if (absIcsUrl.startsWith('file:')) {
+                alert('Ανοίξτε τη σελίδα από ένα δημόσιο URL (όχι file://) ώστε το Outlook να μπορέσει να διαβάσει το .ics.');
+                return;
+            }
+            const outlookUrl = `https://outlook.live.com/calendar/0/addfromweb/?url=${encodeURIComponent(absIcsUrl)}&name=${encodeURIComponent(calendarName)}`;
+            window.open(outlookUrl, '_blank', 'noopener');
         }
-        
+
         function addToYahoo(filename, calendarName) {
-            // For Yahoo, we'll provide instructions since they don't have a direct URL import
-            alert(`Για το Yahoo Calendar:\n\n1. Πηγαίνετε στο Yahoo Calendar\n2. Κάντε κλικ στο "Import" ή "Εισαγωγή"\n3. Επιλέξτε "From URL" ή "Από URL"\n4. Εισάγετε: ${window.location.origin + window.location.pathname.replace('index.html', '') + filename}\n\nΗ εναλλακτική είναι να κατεβάσετε το αρχείο .ics και να το ανεβάσετε χειροκίνητα.`);
+            const absIcsUrl = buildAbsoluteIcsUrl(filename);
+            const message = `Για το Yahoo Calendar:\n\n` +
+                `1. Αντιγράψτε αυτό το URL:\n${absIcsUrl}\n\n` +
+                `2. Πηγαίνετε στο Yahoo Calendar\n` +
+                `3. Κάντε κλικ στο εικονίδιο ⚙️ (Ρυθμίσεις)\n` +
+                `4. Επιλέξτε "Subscribe" ή "Εγγραφή σε ημερολόγιο"\n` +
+                `5. Επικολλήστε το URL και δώστε όνομα: ${calendarName}`;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(absIcsUrl).then(() => {
+                    alert(message + '\n\n✅ Το URL αντιγράφηκε στο clipboard!');
+                }).catch(() => {
+                    alert(message);
+                });
+            } else {
+                alert(message);
+            }
         }
-        
+
         function showAppleInstructions() {
             setTimeout(() => {
                 alert(`Για το Apple Calendar:\n\n📱 iPhone/iPad:\n• Το αρχείο θα ανοίξει αυτόματα στο Calendar app\n• Επιλέξτε "Προσθήκη" για να το εισάγετε\n\n💻 Mac:\n• Κάντε διπλό κλικ στο αρχείο .ics\n• Το Calendar app θα ανοίξει και θα ρωτήσει για εισαγωγή\n• Επιλέξτε το ημερολόγιο που θέλετε να προσθέσετε τους αγώνες`);
             }, 100);
         }
-        
+
         // Get current page URL without filename for calendar URLs
         function getCurrentBaseUrl() {
             const url = window.location.href;
             return url.substring(0, url.lastIndexOf('/') + 1);
         }
-        
+
         // Dropdown functionality for mobile/desktop with stacking fix
         function toggleDropdown(button) {
             const dropdown = button.nextElementSibling;
@@ -964,7 +984,7 @@
             document.querySelectorAll('.calendar-item.open').forEach(it => it.classList.remove('open'));
             document.querySelectorAll('.dropdown-content.show').forEach(d => d.classList.remove('show'));
         }
-        
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.quick-add-dropdown')) {
